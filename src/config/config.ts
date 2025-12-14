@@ -4,8 +4,12 @@ import { ConfigPropertyDoesNotExistError } from "@/errors/config-property-does-n
 
 export type ConfigValues<T extends Record<string, any>> = T;
 
+export function createConfig(provider: ConfigProvider): Config {
+  return new Config(provider);
+}
+
 export class Config {
-  constructor(@Inject() private provider: ConfigProvider) {}
+  constructor(private provider: ConfigProvider) {}
 
   get<T = string>(key: string): T {
     return this.provider.get(key) as T;
@@ -15,6 +19,17 @@ export class Config {
     return this.provider.has
       ? this.provider.has(key)
       : this.provider.get(key) !== undefined;
+  }
+
+  /**
+   * Get the entire configuration object
+   */
+  getAll(): Record<string, any> {
+    // Try to get the getAll method from the provider if it exists
+    if (typeof (this.provider as any).getAll === "function") {
+      return (this.provider as any).getAll();
+    }
+    throw new Error("Provider does not support getAll method");
   }
 
   /**
